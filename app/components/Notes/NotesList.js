@@ -2,7 +2,7 @@ import React from 'react'
 
 const NotesList = ({ notes }) => (
   <ul className="list-group">
-    {notes.map((note) => ( // parens allow implicit return not on same line
+    {notes.map((note) => ( // parens allow JSX return not on same line
       <li key={note['.key']} className="list-group-item">{note['.value']}</li>
     ))}
   </ul>
