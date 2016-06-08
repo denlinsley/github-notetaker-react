@@ -40,17 +40,17 @@ class Profile extends React.Component {
     }) 
 
     getGithubInfo(username)
-      .then(function(data) { // FIXME
+      .then((data) => {
         this.setState({
           bio: data.bio,
           repos: data.repos
         })
-      }.bind(this))
+      })
   }
 
   handleAddNote(newNote) {
     base.post(this.props.params.username, {
-      data: this.state.notes.concat([newNote]) // the whole array
+      data: [...this.state.notes, newNote] // pass the whole array
     })
   }
 
