@@ -1,52 +1,59 @@
 import React from 'react'
-import Router from 'react-router'
-import UserProfile from './Github/UserProfile'
 import Repos from './Github/Repos'
+import UserProfile from './Github/UserProfile'
 import Notes from './Notes/Notes'
-import ReactFireMixin from 'reactfire'
-import Firebase from 'firebase'
 import getGithubInfo from '../utils/helpers'
+import Rebase from 're-base'
 
-// cannot not use ES6 class syntax with mixins
-// see https://github.com/tylermcginnis/re-base for an alternative
-const Profile = React.createClass({
-  mixins: [ReactFireMixin],
-  getInitialState() {
-    return {
+// cannot not mixins (reactfire) use ES6 class syntax - use re-base instead
+const base = Rebase.createClass('https://gh-note-taker-eh.firebaseio.com/')
+
+class Profile extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
       notes: [],
       bio: {},
       repos: []
     }
-  },
+  }
+
   componentDidMount() {
-    this.ref = new Firebase('https://gh-note-taker-eh.firebaseio.com/')
     this.init(this.props.params.username)
-  },
+  }
+
   componentWillReceiveProps(nextProps) {
-    this.unbind('notes')
+    base.removeBinding(this.ref)
     this.init(nextProps.params.username)
-  },
+  }
+
   componentWillUnmount() {
-    this.unbind('notes')
-  },
+    base.removeBinding(this.ref)
+  }
+
   init(username) {
-    const childRef = this.ref.child(username)
-    this.bindAsArray(childRef, 'notes') // property on state to bind to
+    // bind a property on your state to a firebase endpoint
+    this.ref = base.bindToState(username, { // endpoint
+      context: this,
+      asArray: true,
+      state: 'notes', // property on state to bind to
+    }) 
 
     getGithubInfo(username)
-      .then((data) => {
+      .then(function(data) { // FIXME
         this.setState({
           bio: data.bio,
           repos: data.repos
         })
-      })
-  },
+      }.bind(this))
+  }
+
   handleAddNote(newNote) {
-    // append a new note, key is array index (cf. push)
-    this.ref.child(this.props.params.username)
-      .child(this.state.notes.length)
-      .set(newNote)
-  },
+    base.post(this.props.params.username, {
+      data: this.state.notes.concat([newNote]) // the whole array
+    })
+  }
+
   render() {
     return (
       <div className="row">
@@ -60,11 +67,11 @@ const Profile = React.createClass({
           <Notes 
             username={this.props.params.username} 
             notes={this.state.notes} 
-            addNote={this.handleAddNote} />
+            addNote={(newNote) => this.handleAddNote(newNote)} />
         </div>
       </div>
     )
   }
-})
+}
 
 export default Profile
